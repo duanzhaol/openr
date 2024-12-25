@@ -63,8 +63,9 @@ if __name__ == "__main__":
     # parallel config
     parser.add_argument("--local", action="store_true", default=False)
     parser.add_argument("--num_worker", type=int, default=32)
+    parser.add_argument("--test_ds_num", type=int, default=None)
     config = parser.parse_args()
-
+    print("Finish parsing args")
     setup_seed(config.seed)
     if config.local:
         print("run in pure local mode for debug only")
@@ -83,10 +84,13 @@ if __name__ == "__main__":
         lm_step_tag = "\n\n"
     else:
         lm_step_tag = "ки\n"
+    print("Start create caller")
 
     llm_gen_fn = VLLMRemoteCaller(
         config.LM, config.controller_addr, lm_step_tag=lm_step_tag
     )
+    print("Finish create VLLMRemoteCaller")
+
     if config.RM == "dummy":
         rm_config = RewardModelBaseConfig(
             step_tag=prm_step_tag, format_str=prm_format_str
@@ -101,7 +105,7 @@ if __name__ == "__main__":
         )
         rm_call = RMRemoteCaller(rm_config)
 
-    task = Task(task_name=config.task_name, is_few_shot=config.is_few_shot)
+    task = Task(task_name=config.task_name, is_few_shot=config.is_few_shot,test_ds_num=config.test_ds_num)
 
     def parallel_evaluate_test_dataset(
         method_name: str, solver_fn: Callable, save_dir: Optional[Path] = None
@@ -138,13 +142,15 @@ if __name__ == "__main__":
             print(
                 f"After resuming, there are {new_cnt}/{total_cnt} new questions to answer."
             )
-
+        print("Start create ActorPool")
         actor_pool = ActorPool(
             [
                 RemoteMathEvaluator.remote(config.task_name, llm_gen_fn, rm_call)
                 for _ in range(config.num_worker)
             ]
         )
+        print("Finish create ActorPool")
+
         res_q = actor_pool.map_unordered(
             lambda p, x: p.evaluate_problem.remote(x, solver_fn), test_ds
         )       # Distributes tasks from the test_ds dataset across the worker pool asynchronously and

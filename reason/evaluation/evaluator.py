@@ -21,8 +21,9 @@ from envs.base_env import INVALID_ANS
 
 
 class Task:
-    def __init__(self, task_name: str, is_few_shot: bool = False):
+    def __init__(self, task_name: str, is_few_shot: bool = False, test_ds_num: int = None):
         self.task_name = task_name
+        self.test_ds_num = test_ds_num
         task_module = importlib.import_module(f"envs.{task_name}")
         if task_name == "MATH" or "rstar":
             self.extract_answer = task_module.extract_answer
@@ -41,7 +42,12 @@ class Task:
 
     @property
     def test_ds(self):
-        return get_env_datasets(self.task_name)[1]
+        if self.test_ds_num is None:
+            return get_env_datasets(self.task_name)[1]
+        else:
+            ds = get_env_datasets(self.task_name)[1]
+            ds.data = ds.data[:self.test_ds_num]
+            return ds
 
 
 CHOSEN_AGGR_METHODS = [

@@ -7,12 +7,12 @@ WORKER_BASE_PORT=30010
 echo PYTHON_EXECUTABLE=$(which python3)
 PYTHON_EXECUTABLE=$(which python3)
 
-MODEL_BASE=/hpc2ssd/JH_DATA/spooler/qxiao183/workspace/hf_models
+MODEL_BASE=/home/duan/workspace/o1-models/
 CUDA_DEVICE_BASE=0
-POLICY_MODEL_NAME=Qwen/Qwen2.5-Math-1.5B-Instruct
+POLICY_MODEL_NAME=Qwen2.5-Math-1.5B-Instruct
 # VALUE_MODEL_NAME=qwen_prm/checkpoint-6898/
 # VALUE_MODEL_NAME=Qwen/Qwen2.5-Math-7B-PRM
-VALUE_MODEL_NAME=peiyi9979/math-shepherd-mistral-7b-prm
+VALUE_MODEL_NAME=Qwen2.5-Math-7B-Instruct
 MODEL_PATH=$MODEL_BASE/$POLICY_MODEL_NAME
 VALUE_MODEL_PATH=$MODEL_BASE/$VALUE_MODEL_NAME
 
@@ -23,8 +23,8 @@ tmux new-session -s FastChat -n controller -d
 tmux send-keys "export LOGDIR=${LOGDIR}" Enter
 tmux send-keys "$PYTHON_EXECUTABLE -m fastchat.serve.controller --port ${CONTROLER_PORT} --host $HOST_ADDR" Enter
 
-NUM_LM_WORKER=2
-NUM_RM_WORKER=2
+NUM_LM_WORKER=1
+NUM_RM_WORKER=1
 
 echo "Wait 5 seconds ..."
 sleep 5
@@ -39,7 +39,7 @@ do
 done
 
 
-# start value service
+# start value service1
 for i in $(seq 0 $((NUM_RM_WORKER-1)))
 do
   WORKER_PORT=$((i+WORKER_BASE_PORT+NUM_LM_WORKER))
